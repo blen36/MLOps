@@ -68,9 +68,15 @@ y_reg_pred = reg_model.predict(X_test)
 mse = mean_squared_error(y_reg_test, y_reg_pred)
 rmse = root_mean_squared_error(y_reg_test, y_reg_pred)
 mae = mean_absolute_error(y_reg_test, y_reg_pred)
-print('Mean Squared Error:', mse)
+print('Mean Squared Error:', mse, '\n')
+print('''MSE в переделах нормы. Наличии выбросов в данных исправлено. 
+    Поскольку MSE возводит ошибки в квадрат, редкие, но крупные нестыковки в калориях сильно завышают этот показатель. 
+    Модель в целом точна, но чувствительна к аномалиям.''', '\n')
 print('Root Mean Squared Error:', rmse)
-print('Mean Absolute Error:', mae)
+print('Mean Absolute Error:', mae, '\n')
+print('''MAE показывает, что в среднем модель ошибается всего на 4.3 ккал, 
+    что является отличным результатом для пищевых продуктов.''')
+print()
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -79,4 +85,9 @@ clf_model = LogisticRegression(max_iter=1000)
 clf_model.fit(X_train_scaled, y_clf_train)
 y_clf_pred = clf_model.predict(X_test_scaled)
 accuracy = accuracy_score(y_clf_test, y_clf_pred)
-print('Accuracy:', accuracy)
+print('Accuracy:', accuracy, '\n')
+print('''Точность 85.71% говорит о хорошей предсказательной способности модели. 
+    Это означает, что состав макронутриентов (БЖУ) напрямую коррелирует с типом приема пищи.
+    Ошибка в 15% может быть вызвана дисбалансом классов (например, перекусов в базе больше, 
+    чем завтраков) или тем, что логика функции suggest_meal_type имеет «серые зоны», 
+    которые линейная модель не может идеально разделить.''')
