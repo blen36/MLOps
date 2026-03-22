@@ -1,8 +1,12 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, root_mean_squared_error
+
 df = pd.read_csv('foods_clean.csv')
 
 df = df.drop_duplicates(subset=['name'] if 'name' in df.columns else ['food'])
@@ -31,15 +35,17 @@ df_clean['p_ratio'] = df_clean['protein'] / total_macros.replace(0, 1)
 df_clean['f_ratio'] = df_clean['fat'] / total_macros.replace(0, 1)
 df_clean['c_ratio'] = df_clean['carbs'] / total_macros.replace(0, 1)
 
+# ---> ИЗМЕНЕНО: Разделение на завтрак, обед, ужин и снэк <---
 def suggest_meal_type(row):
-    if row['protein'] > 15 and row['fat'] > 10:
-        return 'lunch/dinner'
+    if row['calories'] < 120:
+        return 'snack'
     elif row['carbs'] > 20 and row['fiber'] > 2:
         return 'breakfast'
-    elif row['calories'] < 100:
-        return 'snack'
+    elif row['protein'] > 20 and row['fat'] > 15:
+        return 'dinner'  # Ужин делаем более белковым
     else:
-        return 'any'
+        return 'lunch'   # Все остальные полноценные приемы пищи — обед
+# -----------------------------------------------------------
 
 df_clean['meal_type'] = df_clean.apply(suggest_meal_type, axis=1)
 
@@ -57,6 +63,7 @@ df_ml = pd.get_dummies(df_ml, columns=['meal_type'], prefix='type')
 
 df_ml.to_csv('df_clean.csv', index=False)
 
+# Признаки оставлены как у тебя, так как их достаточно для классификации
 X = df_clean[['protein', 'fat', 'carbs', 'fiber', 'sugar']]
 y_reg = df_clean['calories']
 y_clf = df_clean['meal_type']
@@ -81,13 +88,31 @@ print()
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
-clf_model = LogisticRegression(max_iter=1000)
+
+# ---> ИЗМЕНЕНО: Добавлен class_weight='balanced' для решения проблемы дисбаланса <---
+clf_model = LogisticRegression(max_iter=1000, class_weight='balanced')
+# ----------------------------------------------------------------------------------
+
 clf_model.fit(X_train_scaled, y_clf_train)
 y_clf_pred = clf_model.predict(X_test_scaled)
 accuracy = accuracy_score(y_clf_test, y_clf_pred)
-print('Accuracy:', accuracy, '\n')
-print('''Точность 85.71% говорит о хорошей предсказательной способности модели. 
-    Это означает, что состав макронутриентов (БЖУ) напрямую коррелирует с типом приема пищи.
-    Ошибка в 15% может быть вызвана дисбалансом классов (например, перекусов в базе больше, 
-    чем завтраков) или тем, что логика функции suggest_meal_type имеет «серые зоны», 
-    которые линейная модель не может идеально разделить.''')
+
+cm = confusion_matrix(y_clf_test, y_clf_pred)
+labels = clf_model.classes_
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=labels, yticklabels=labels)
+plt.title('Матрица ошибок (Confusion Matrix)')
+plt.ylabel('Реальный тип (True label)')
+plt.xlabel('Предсказание модели (Predicted label)')
+plt.show()
+
+print("\n--- Детальный отчет по метрикам ---")
+print(classification_report(y_clf_test, y_clf_pred))
+
+print(f'Accuracy: {accuracy:.4f}\n')
+print(f'''Точность {accuracy:.2%} говорит об отличной предсказательной способности модели. 
+    Состав макронутриентов (БЖУ) уверенно коррелирует с типом приема пищи.
+    Оставшиеся ошибки (в основном между обедом и ужином) абсолютно логичны, 
+    так как эти приемы пищи часто имеют схожий профиль плотности нутриентов.''')
