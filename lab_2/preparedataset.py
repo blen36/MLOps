@@ -1,6 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
@@ -30,22 +28,15 @@ df_clean.columns = [col.lower() for col in df_clean.columns]
 if 'food' in df_clean.columns:
     df_clean = df_clean.rename(columns={'food': 'name'})
 
-total_macros = df_clean['protein'] + df_clean['fat'] + df_clean['carbs']
-df_clean['p_ratio'] = df_clean['protein'] / total_macros.replace(0, 1)
-df_clean['f_ratio'] = df_clean['fat'] / total_macros.replace(0, 1)
-df_clean['c_ratio'] = df_clean['carbs'] / total_macros.replace(0, 1)
-
-# ---> ИЗМЕНЕНО: Разделение на завтрак, обед, ужин и снэк <---
 def suggest_meal_type(row):
     if row['calories'] < 120:
         return 'snack'
     elif row['carbs'] > 20 and row['fiber'] > 2:
         return 'breakfast'
     elif row['protein'] > 20 and row['fat'] > 15:
-        return 'dinner'  # Ужин делаем более белковым
+        return 'dinner'
     else:
-        return 'lunch'   # Все остальные полноценные приемы пищи — обед
-# -----------------------------------------------------------
+        return 'lunch'
 
 df_clean['meal_type'] = df_clean.apply(suggest_meal_type, axis=1)
 
@@ -53,7 +44,7 @@ df_clean['cal_diff'] = abs(df_clean['calories'] - (df_clean['protein']*4 + df_cl
 df_clean = df_clean[df_clean['cal_diff'] < 50]
 
 scaler = MinMaxScaler()
-numeric_features = ['calories', 'protein', 'fat', 'carbs', 'fiber', 'sugar', 'p_ratio', 'f_ratio', 'c_ratio']
+numeric_features = ['calories', 'protein', 'fat', 'carbs', 'fiber', 'sugar']
 numeric_features = [col for col in numeric_features if col in df_clean.columns]
 
 df_ml = df_clean.copy()
@@ -63,7 +54,6 @@ df_ml = pd.get_dummies(df_ml, columns=['meal_type'], prefix='type')
 
 df_ml.to_csv('df_clean.csv', index=False)
 
-# Признаки оставлены как у тебя, так как их достаточно для классификации
 X = df_clean[['protein', 'fat', 'carbs', 'fiber', 'sugar']]
 y_reg = df_clean['calories']
 y_clf = df_clean['meal_type']
@@ -89,26 +79,19 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# ---> ИЗМЕНЕНО: Добавлен class_weight='balanced' для решения проблемы дисбаланса <---
 clf_model = LogisticRegression(max_iter=1000, class_weight='balanced')
-# ----------------------------------------------------------------------------------
 
 clf_model.fit(X_train_scaled, y_clf_train)
 y_clf_pred = clf_model.predict(X_test_scaled)
 accuracy = accuracy_score(y_clf_test, y_clf_pred)
 
+print("Матрица ошибок: (строки = реальные значения; столбцы = предсказания модели)")
 cm = confusion_matrix(y_clf_test, y_clf_pred)
-labels = clf_model.classes_
-
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-            xticklabels=labels, yticklabels=labels)
-plt.title('Матрица ошибок (Confusion Matrix)')
-plt.ylabel('Реальный тип (True label)')
-plt.xlabel('Предсказание модели (Predicted label)')
-plt.show()
+print(cm)
 
 print("\n--- Детальный отчет по метрикам ---")
+print("Precision(точность) - Из всех объектов, которые модель назвала breakfast, сколько реально breakfast.")
+print("Recall(полнота) - Из всех реальных breakfast сколько модель смогла обнаружить.")
 print(classification_report(y_clf_test, y_clf_pred))
 
 print(f'Accuracy: {accuracy:.4f}\n')
