@@ -6,9 +6,9 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.metrics import roc_curve, auc, confusion_matrix
 
 df = pd.read_csv('df_clean.csv')
-X = df.drop(columns=['calories', 'name'])
+X = df.drop(columns=['calories', 'name', 'cal_diff'])
 y_reg = df['calories']
-threshold = y_reg.median()
+threshold = y_reg.quantile(0.75)
 y_clf = (y_reg > threshold).astype(int)
 
 X_train, X_test, y_reg_train, y_reg_test, y_clf_train, y_clf_test = train_test_split(X, y_reg, y_clf, test_size=0.2, random_state=42)
@@ -22,7 +22,11 @@ r2 = r2_score(y_reg_test, y_pred)
 print("MSE:", mse)
 print("R2:", r2)
 
-clf_model = DecisionTreeClassifier(random_state=42, max_depth=5, max_leaf_nodes=5)
+clf_model = DecisionTreeClassifier( random_state=42,
+    max_depth=3,
+    min_samples_leaf=10,
+    min_samples_split=20)
+
 clf_model.fit(X_train, y_clf_train)
 y_proba = clf_model.predict_proba(X_test)
 
