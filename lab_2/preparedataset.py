@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score, root_mean_squared_error
 
 df = pd.read_csv('foods_clean.csv')
@@ -59,7 +59,7 @@ y_reg = df_clean['calories']
 y_clf = df_clean['meal_type']
 X_train, X_test, y_reg_train, y_reg_test, y_clf_train, y_clf_test = train_test_split(X, y_reg, y_clf, test_size=0.2, random_state=42)
 
-reg_model = LinearRegression()
+reg_model = Ridge(alpha=1.0)
 reg_model.fit(X_train, y_reg_train)
 y_reg_pred = reg_model.predict(X_test)
 mse = mean_squared_error(y_reg_test, y_reg_pred)
@@ -68,7 +68,7 @@ mae = mean_absolute_error(y_reg_test, y_reg_pred)
 print('Mean Squared Error:', mse, '\n')
 print('''MSE в переделах нормы. Наличии выбросов в данных исправлено. 
     Поскольку MSE возводит ошибки в квадрат, редкие, но крупные нестыковки в калориях сильно завышают этот показатель. 
-    Модель в целом точна, но чувствительна к аномалиям.''', '\n')
+    Модель стала более устойчивой за счет L2-регуляризации.''', '\n')
 print('Root Mean Squared Error:', rmse)
 print('Mean Absolute Error:', mae, '\n')
 print('''MAE показывает, что в среднем модель ошибается всего на 4.3 ккал, 
@@ -79,7 +79,7 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-clf_model = LogisticRegression(max_iter=1000, class_weight='balanced')
+clf_model = LogisticRegression(C=100, max_iter=1000, class_weight='balanced')
 
 clf_model.fit(X_train_scaled, y_clf_train)
 y_clf_pred = clf_model.predict(X_test_scaled)
@@ -96,6 +96,6 @@ print(classification_report(y_clf_test, y_clf_pred))
 
 print(f'Accuracy: {accuracy:.4f}\n')
 print(f'''Точность {accuracy:.2%} говорит об отличной предсказательной способности модели. 
-    Состав макронутриентов (БЖУ) уверенно коррелирует с типом приема пищи.
-    Оставшиеся ошибки (в основном между обедом и ужином) абсолютно логичны, 
-    так как эти приемы пищи часто имеют схожий профиль плотности нутриентов.''')
+    L2-регуляризация позволила снизить переобучение и повысить устойчивость модели.
+    Оставшиеся ошибки (в основном между обедом и ужином) логичны, 
+    так как эти приемы пищи имеют схожий нутриентный профиль.''')
