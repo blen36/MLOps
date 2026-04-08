@@ -22,7 +22,7 @@ r2 = r2_score(y_reg_test, y_pred)
 print("MSE:", mse)
 print("R2:", r2)
 
-clf_model = DecisionTreeClassifier(random_state=42, max_depth=5)
+clf_model = DecisionTreeClassifier(random_state=42, max_depth=5, max_leaf_nodes=5)
 clf_model.fit(X_train, y_clf_train)
 y_proba = clf_model.predict_proba(X_test)
 
