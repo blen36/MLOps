@@ -15,6 +15,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 rf = RandomForestClassifier(n_estimators=200, oob_score=True, random_state=42)
 rf.fit(X_train, y_train)
 
+ # оценки на данных, которые не попали в бутстрэп-выборку (~36,8%)
 print("=== Random Forest ===")
 print("OOB Accuracy:", rf.oob_score_)
 print("OOB Error:", 1 - rf.oob_score_)
