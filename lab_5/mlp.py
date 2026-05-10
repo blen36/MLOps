@@ -117,6 +117,7 @@ models = {
         hidden_layer_sizes=(30, 20),
         alpha=0.05,
         activation='relu',
+        solver='adam',
         max_iter=1000,
         learning_rate_init=0.001,
         random_state=42
