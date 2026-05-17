@@ -93,30 +93,28 @@ data = pd.DataFrame({
 
 X = data["text"]
 y = data["sentiment"]
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42, stratify=y
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
 
-vectorizer = TfidfVectorizer(stop_words="english", lowercase=True)
+vectorizer = TfidfVectorizer(lowercase=True)
 X_train_vec = vectorizer.fit_transform(X_train)
 X_test_vec = vectorizer.transform(X_test)
 
 models = {
     "Logistic Regression": LogisticRegression(
-        C=0.5,  # Умеренная регуляризация
+        C=0.5,
         random_state=42
     ),
 
     "Random Forest": RandomForestClassifier(
-        n_estimators=200,  # Больше деревьев — стабильнее результат
-        max_depth=12,  # Ограничиваем глубину, чтобы не переобучиться
+        n_estimators=200,
+        max_depth=12,
         random_state=42
     ),
 
     "MLP (Neural Network)": MLPClassifier(
-        hidden_layer_sizes=(30, 20),
+        hidden_layer_sizes=(16,),
         alpha=0.05,
-        activation='relu',
+        activation='logistic',
         solver='adam',
         max_iter=1000,
         learning_rate_init=0.001,
