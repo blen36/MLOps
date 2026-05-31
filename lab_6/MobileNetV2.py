@@ -78,7 +78,7 @@ test_loss, test_accuracy = model.evaluate(test_data)
 print(f'Точность MobileNetV2 на test: {test_accuracy * 100:.2f}%')
 print('Классы модели:', train_data.class_indices)
 
-img = image.load_img( '5211023283132767925.jpg', target_size=(160, 160), color_mode='rgb')
+img = image.load_img( '5237790176451438131.jpg', target_size=(160, 160), color_mode='rgb')
 img_array = image.img_to_array(img)
 img_array = np.expand_dims(img_array, axis=0)
 img_array = preprocess_input(img_array)
